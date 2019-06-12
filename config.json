@@ -1,0 +1,48 @@
+{
+  "params": {
+    "vocab_file": {
+      "title": "bert词汇表",
+      "desc": "指定bert所需的词汇表，中文/英文",
+      "default": "./bert/vocab.txt",
+      "type": "string"
+    },
+    "csv_file": {
+      "title": "训练文件",
+      "desc": "指定所需训练文件",
+      "default": "",
+      "type": "string"
+    },
+    "column_name_x1": {
+      "title": "列名x1",
+      "desc": "输入文本片段一",
+      "default": "x1",
+      "type": "string"
+    },
+    "column_name_x2": {
+      "title": "列名x2",
+      "desc": "输入文本片段二，默认为空表示不启用",
+      "default": "",
+      "type": "string"
+    },
+    "column_name_y": {
+      "title": "列名y",
+      "desc": "模型需要预测的标签",
+      "default": "y",
+      "type": "string"
+    }
+  },
+  "paramExample": {
+    "input": {
+      "t1": "/tmp/"
+    },
+    "output": {
+      "r1": "/tmp/"
+    },
+    "column_name_x1": "x1",
+    "column_name_x2": "",
+    "column_name_y": "y"
+  },
+  "executionParam": {
+    "entry": "sklearn-xgboost-train-component/main.py"
+  }
+}
