@@ -110,13 +110,15 @@ def load_model(model_folder):
 
     # We clear devices to allow TensorFlow to control on which device it will load operations
     clear_devices = True
-
+    tf.reset_default_graph()
     # We import the meta graph and retrieve a Saver
     saver = tf.train.import_meta_graph(input_checkpoint + '.meta', clear_devices=clear_devices)
 
     # We retrieve the protobuf graph definition
     graph = tf.get_default_graph()
     input_graph_def = graph.as_graph_def()
+
+    graph = tf.Graph().as_default()
 
     # We start a session and restore the graph weights
     sess = tf.Session()
