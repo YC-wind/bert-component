@@ -154,35 +154,14 @@ def main():
 
     dev_batch_size = config["dev_batch_size"]
 
-    # init_global = tf.global_variables_initializer()
+    init_global = tf.global_variables_initializer()
+    saver = tf.train.Saver(tf.global_variables(), max_to_keep=3)  # 保存最后top3模型
 
     with tf.Session() as sess:
-        # sess.run(init_global)
+        sess.run(init_global)
         tvars = tf.trainable_variables()
-        print("trainable_variables",len(tvars))
         initialized_variable_names = {}
         print("start load the pretrain model")
-        scaffold_fn = None
-        # if init_checkpoint:
-        #     (assignment_map, initialized_variable_names
-        #      ) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
-        #     if use_tpu:
-        #         def tpu_scaffold():
-        #             tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-        #             return tf.train.Scaffold()
-        #
-        #         scaffold_fn = tpu_scaffold
-        #     else:
-        #         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
-        #
-        # tf.logging.info("**** Trainable Variables ****")
-        # for var in tvars:
-        #     init_string = ""
-        #     if var.name in initialized_variable_names:
-        #         # var.trainable = False
-        #         init_string = ", *INIT_FROM_CKPT*"
-        #     tf.logging.info("  name = %s, shape = %s%s", var.name, var.shape,
-        #                     init_string)
 
         if init_checkpoint:
             tvars = tf.trainable_variables()
@@ -190,8 +169,8 @@ def main():
             (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
                                                                                                        init_checkpoint)
             print("initialized_variable_names:", len(initialized_variable_names))
-            saver = tf.train.Saver([v for v in tvars if v.name in initialized_variable_names])
-            saver.restore(sess, init_checkpoint)
+            saver_ = tf.train.Saver([v for v in tvars if v.name in initialized_variable_names])
+            saver_.restore(sess, init_checkpoint)
             tvars = tf.global_variables()
             not_initialized_vars = [v for v in tvars if v.name not in initialized_variable_names]
             tf.logging.info('--all size %s; not initialized size %s' % (len(tvars), len(not_initialized_vars)))
@@ -202,7 +181,6 @@ def main():
         else:
             sess.run(tf.global_variables_initializer())
 
-        saver = tf.train.Saver(max_to_keep=3)  # 保存最后top3模型
         print("********* bert_multi_class_train start *********")
 
         # tf.summary.FileWriter("output/",sess.graph)
