@@ -133,9 +133,7 @@ def prepare_tf_record_data(tokenizer, max_seq_len, label_list, split, column_nam
             label = [label2id.get(row[column_name_y])]
         else:
             label = np.zeros(len(label_list), dtype=np.int64)
-            if str(row[column_name_y]) == "nan":
-                pass
-            else:
+            if str(row[column_name_y]) != "nan" and str(row[column_name_y]) != "":
                 label_index = [label2id.get(_) for _ in row[column_name_y].split(split)]
                 label[label_index] = 1
         features["input_ids"] = create_int_feature(feature[0])
