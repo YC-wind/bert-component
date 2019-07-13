@@ -190,8 +190,8 @@ def main():
             (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
                                                                                                        init_checkpoint)
             print("initialized_variable_names:", len(initialized_variable_names))
-            saver = tf.train.Saver([v for v in tvars if v.name in initialized_variable_names])
-            saver.restore(sess, init_checkpoint)
+            saver_ = tf.train.Saver([v for v in tvars if v.name in initialized_variable_names])
+            saver_.restore(sess, init_checkpoint)
             tvars = tf.global_variables()
             not_initialized_vars = [v for v in tvars if v.name not in initialized_variable_names]
             tf.logging.info('--all size %s; not initialized size %s' % (len(tvars), len(not_initialized_vars)))
