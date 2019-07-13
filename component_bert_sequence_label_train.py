@@ -180,8 +180,8 @@ def main():
             (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
                                                                                                        init_checkpoint)
             print("initialized_variable_names:", len(initialized_variable_names))
-            saver = tf.train.Saver([v for v in tvars if v.name in initialized_variable_names])
-            saver.restore(sess, init_checkpoint)
+            saver_ = tf.train.Saver([v for v in tvars if v.name in initialized_variable_names])
+            saver_.restore(sess, init_checkpoint)
             tvars = tf.global_variables()
             not_initialized_vars = [v for v in tvars if v.name not in initialized_variable_names]
             tf.logging.info('--all size %s; not initialized size %s' % (len(tvars), len(not_initialized_vars)))
@@ -195,7 +195,7 @@ def main():
         # if init_checkpoint:
         #     saver.restore(sess, init_checkpoint)
         #     print("checkpoint restored from %s" % init_checkpoint)
-        print("********* bert_multi_label_train start *********")
+        print("********* bert_multi_sequence_train start *********")
 
         # tf.summary.FileWriter("output/",sess.graph)
         def train_step(ids, mask, segment, y, step):
@@ -257,7 +257,7 @@ def main():
     input_ids = tf.placeholder(tf.int64, shape=[None, seq_len], name='input_ids')
     input_mask = tf.placeholder(tf.int64, shape=[None, seq_len], name='input_mask')
     segment_ids = tf.placeholder(tf.int64, shape=[None, seq_len], name='segment_ids')
-    labels = tf.placeholder(tf.int64, shape=[None, num_labels], name='labels')
+    labels = tf.placeholder(tf.int64, shape=[None, seq_len], name='labels')
     keep_prob = tf.placeholder(tf.float32, name='keep_prob')  # , name='is_training'
 
     bert_config_ = load_bert_config(config["bert_config"])
@@ -284,5 +284,5 @@ def main():
 
 
 if __name__ == "__main__":
-    print("********* component_bert_multi_label_train start *********")
+    print("********* component_bert_sequence_label_train start *********")
     main()
