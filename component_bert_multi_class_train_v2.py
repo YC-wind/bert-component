@@ -82,6 +82,13 @@ def create_model(bert_config, is_training, input_ids_1, input_mask_1, segment_id
     # 最后进行拼接(前面也可以新增一些其他网络层)
     output_layer = tf.concat([output_layer_1, output_layer_2], axis=-1)
 
+    # 最后进行拼接(前面也可以新增一些其他网络层)
+    output_layer = tf.layers.dense(
+        output_layer,
+        bert_config.hidden_size,
+        activation=tf.nn.relu,
+        kernel_initializer=modeling.create_initializer(bert_config.initializer_range))
+
     hidden_size = output_layer.shape[-1].value
     print(output_layer.shape)
 
