@@ -160,11 +160,11 @@ def main():
     with tf.Session() as sess:
         sess.run(init_global)
         tvars = tf.trainable_variables()
-        initialized_variable_names = {}
         print("start load the pretrain model")
 
         if init_checkpoint:
-            tvars = tf.trainable_variables()
+            tvars = tf.global_variables()
+            # tvars = tf.trainable_variables()
             print("trainable_variables", len(tvars))
             (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
                                                                                                        init_checkpoint)
