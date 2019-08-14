@@ -165,19 +165,25 @@ def main():
         if init_checkpoint:
             tvars = tf.global_variables()
             # tvars = tf.trainable_variables()
-            print("trainable_variables", len(tvars))
+            print("global_variables", len(tvars))
             (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
                                                                                                        init_checkpoint)
             print("initialized_variable_names:", len(initialized_variable_names))
             saver_ = tf.train.Saver([v for v in tvars if v.name in initialized_variable_names])
             saver_.restore(sess, init_checkpoint)
             tvars = tf.global_variables()
+            initialized_vars = [v for v in tvars if v.name in initialized_variable_names]
             not_initialized_vars = [v for v in tvars if v.name not in initialized_variable_names]
             tf.logging.info('--all size %s; not initialized size %s' % (len(tvars), len(not_initialized_vars)))
             if len(not_initialized_vars):
                 sess.run(tf.variables_initializer(not_initialized_vars))
+            for v in initialized_vars:
+                tf.logging.info('--initialized: %s, shape = %s' % (v.name, v.shape))
             for v in not_initialized_vars:
                 tf.logging.info('--not initialized: %s, shape = %s' % (v.name, v.shape))
+            # 计算 梯度 和 trainable_variables 好像也不一致的，具体还是以 optimization 为准
+            for v in tf.trainable_variables():
+                tf.logging.info('--trainable_variables: %s, shape = %s' % (v.name, v.shape))
         else:
             sess.run(tf.global_variables_initializer())
 

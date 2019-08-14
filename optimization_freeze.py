@@ -55,11 +55,13 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
 
     tvars = tf.trainable_variables()
     # grads = tf.gradients(loss, tvars)
-    
+
     # --------------------
     # 需要训练的层
-    trainable_vars = [t for t in tvars if "layer_11" in t.name or "layer_10" in t.name or "output_" in t.name]
-    print("initialized_variable_names:", len(trainable_vars))
+    # 需要训练的层, 之前忘记 加 pooler 层了，不加容易 训练不出来 "layer_9" in t.name or 只训练后面 两层
+    trainable_vars = [t for t in tvars if
+                      "layer_10" in t.name or "layer_11" in t.name or "pooler" in t.name or "output_" in t.name]
+    print("trainable_vars:", len(trainable_vars))
     grads = tf.gradients(loss, trainable_vars)
     # grads = optimizer.compute_gradients(loss, var_list=trainable_vars)
     # --------------------
@@ -67,7 +69,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu):
     # This is how the model was pre-trained.
     (grads, _) = tf.clip_by_global_norm(grads, clip_norm=1.0)
 
-    #train_op = optimizer.apply_gradients(
+    # train_op = optimizer.apply_gradients(
     #    zip(grads, tvars), global_step=global_step)
     train_op = optimizer.apply_gradients(
         zip(grads, trainable_vars), global_step=global_step)
