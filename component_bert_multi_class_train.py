@@ -9,31 +9,33 @@ import numpy as np
 import pandas as pd
 import collections
 import modeling
-import optimization
+import optimization_freeze as optimization
 from sklearn.externals import joblib
 import os
 from sklearn.metrics import classification_report
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1,2'
-
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+init_checkpoint_1 = "/datadisk3/baili/model/labor_9/bert.ckpt"
+# 53193
 config = {
-    "in_1": "./out/train_new_tiny.tf_record",  # 第一个输入为 训练文件
-    "in_2": "./out/dev_new_tiny.tf_record",  # 第二个输入为 验证文件
-    "bert_config": "./bert/bert_config.json",  # bert模型配置文件
-    "init_checkpoint": "./bert/bert_model.ckpt",  # 预训练bert模型
+    "in_1": "/datadisk3/baili/train_data_cail_1/train_labor.tf_record",  # 第一个输入为 训练文件
+    "in_2": "/datadisk3/baili/train_data_cail_1/dev_labor.tf_record",  # 第二个输入为 验证文件
+    "bert_config": "../BERT_model/bert_wwm/bert_config.json",  # bert模型配置文件
+    "init_checkpoint": init_checkpoint_1,  # 预训练bert模型
     # "init_checkpoint": "./bin/bert.ckpt-114000",  # 预训练bert模型
-    "train_examples_len": 20000,
-    "dev_examples_len": 2000,
-    "num_labels": 9,
-    "train_batch_size": 32,
-    "dev_batch_size": 32,
-    "num_train_epochs": 10,
-    "eval_per_step": 200,
-    "learning_rate": 5e-5,
+    "train_examples_len": 3093000,
+    "dev_examples_len": 80000,
+    "num_labels": 2,
+    "train_batch_size": 128,
+    "dev_batch_size": 128,
+    "num_train_epochs": 5,
+    "eval_start_step": 50000,
+    "eval_per_step": 5000,
+    "learning_rate": 1e-5,
     "warmup_proportion": 0.1,
-    "max_seq_len": 128,  # 输入文本片段的最大 char级别 长度
-    "out": "./bin/",  # 保存模型路径
-    "out_1": "./bin_1/"  # 保存模型路径
+    "max_seq_len": 192,  # 输入文本片段的最大 char级别 长度
+    "out": "/datadisk3/baili/model/labor_10/",  # 保存模型路径
+    "out_1": "/datadisk3/baili/model/labor_10/"  # 保存模型路径
 }
 
 
@@ -155,16 +157,16 @@ def main():
     dev_batch_size = config["dev_batch_size"]
 
     init_global = tf.global_variables_initializer()
-    saver = tf.train.Saver(tf.global_variables(), max_to_keep=3)  # 保存最后top3模型
+    saver = tf.train.Saver([v for v in tf.global_variables() if 'adam_v' not in v.name and 'adam_m' not in v.name],
+                           max_to_keep=2)  # 保存最后top3模型
 
     with tf.Session() as sess:
         sess.run(init_global)
-        tvars = tf.trainable_variables()
         print("start load the pretrain model")
 
         if init_checkpoint:
-            tvars = tf.global_variables()
-            # tvars = tf.trainable_variables()
+            # tvars = tf.global_variables()
+            tvars = tf.trainable_variables()
             print("global_variables", len(tvars))
             (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
                                                                                                        init_checkpoint)
@@ -178,15 +180,14 @@ def main():
             if len(not_initialized_vars):
                 sess.run(tf.variables_initializer(not_initialized_vars))
             for v in initialized_vars:
-                tf.logging.info('--initialized: %s, shape = %s' % (v.name, v.shape))
+                print('--initialized: %s, shape = %s' % (v.name, v.shape))
             for v in not_initialized_vars:
-                tf.logging.info('--not initialized: %s, shape = %s' % (v.name, v.shape))
-            # 计算 梯度 和 trainable_variables 好像也不一致的，具体还是以 optimization 为准
-            for v in tf.trainable_variables():
-                tf.logging.info('--trainable_variables: %s, shape = %s' % (v.name, v.shape))
+                print('--not initialized: %s, shape = %s' % (v.name, v.shape))
         else:
             sess.run(tf.global_variables_initializer())
-
+        # if init_checkpoint:
+        #     saver.restore(sess, init_checkpoint)
+        #     print("checkpoint restored from %s" % init_checkpoint)
         print("********* bert_multi_class_train start *********")
 
         # tf.summary.FileWriter("output/",sess.graph)
@@ -199,7 +200,7 @@ def main():
             _, out_loss, out_logits, p_ = sess.run([train_op, total_loss, logits, probabilities], feed_dict=feed)
             pre = np.argmax(p_, axis=-1)
             acc = np.sum(np.equal(pre, y)) / len(pre)
-            print("step :{},loss :{}, acc :{}".format(step, out_loss, acc))
+            print("step :{}, lr:{}, loss :{}, acc :{}".format(step, _[1], out_loss, acc))
             return out_loss, pre, y
 
         def dev_step(ids, mask, segment, y):
@@ -222,7 +223,7 @@ def main():
             ids_train, mask_train, segment_train, y_train = sess.run([input_ids2, input_mask2, segment_ids2, labels2])
             train_step(ids_train, mask_train, segment_train, y_train, i)
 
-            if i % eval_per_step == 0:
+            if i % eval_per_step == 0 and i >= config["eval_start_step"]:
                 total_loss_dev = 0
                 dev_input_ids2, dev_input_mask2, dev_segment_ids2, dev_labels2 = get_input_data(config["in_2"], seq_len,
                                                                                                 dev_batch_size)
@@ -243,6 +244,8 @@ def main():
                     print("save model:\t%f\t>%f" % (min_total_loss_dev, total_loss_dev))
                     min_total_loss_dev = total_loss_dev
                     saver.save(sess, config["out"] + 'bert.ckpt', global_step=i)
+            elif i < config["eval_start_step"] and i % 1000 == 0:
+                saver.save(sess, config["out"] + 'bert.ckpt', global_step=i)
     sess.close()
 
     # remove dropout

@@ -24,7 +24,8 @@ config = {
     "column_name_y": "label",
     "label_list": ["0", "1"],  # 整个样本空间的 标签集
     "split": "",  # 标签的分割符，默认为空，表示单标签，不为空的化，按分隔符进行分割出多标签
-    "max_seq_len": 128,  # 输入文本片段的最大 char级别 长度
+    "max_seq_len1": 128,  # 输入文本片段的最大 char级别 长度
+    "max_seq_len2": 128,  # 输入文本片段的最大 char级别 长度
     "out_1": "/datadisk3/baili/train_data_qq/train_laws.tf_record",  # 输出为 tf_record 的二进制文件
 }
 
@@ -101,8 +102,8 @@ def process_one_example(tokenizer, text_a, text_b=None, max_seq_len=256):
     return feature
 
 
-def prepare_tf_record_data(tokenizer, max_seq_len, label_list, split, column_name_x1, column_name_x2, column_name_y,
-                           path="./data/dev.csv", out_path="./out/dev.tf_record"):
+def prepare_tf_record_data(tokenizer, max_seq_len1, max_seq_len2, label_list, split, column_name_x1, column_name_x2,
+                           column_name_y, path="./data/dev.csv", out_path="./out/dev.tf_record"):
     """
         生成训练数据， tf.record, 单标签分类模型, 随机打乱数据
     """
@@ -120,8 +121,8 @@ def prepare_tf_record_data(tokenizer, max_seq_len, label_list, split, column_nam
         if not isinstance(row[column_name_x1], str):
             print(row[column_name_x1])
             continue
-        feature_1 = process_one_example(tokenizer, row[column_name_x1], None, max_seq_len=max_seq_len)
-        feature_2 = process_one_example(tokenizer, row[column_name_x2], None, max_seq_len=max_seq_len)
+        feature_1 = process_one_example(tokenizer, row[column_name_x1], None, max_seq_len=max_seq_len1)
+        feature_2 = process_one_example(tokenizer, row[column_name_x2], None, max_seq_len=max_seq_len2)
 
         def create_int_feature(values):
             f = tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
@@ -169,8 +170,8 @@ def prepare_tf_record_data(tokenizer, max_seq_len, label_list, split, column_nam
 
 def main():
     tokenizer = joblib.load(config["in_1"])
-    prepare_tf_record_data(tokenizer, config["max_seq_len"], config["label_list"], config["split"],
-                           config["column_name_x1"], config["column_name_x2"], config["column_name_y"],
+    prepare_tf_record_data(tokenizer, config["max_seq_len1"], config["max_seq_len2"], config["label_list"],
+                           config["split"], config["column_name_x1"], config["column_name_x2"], config["column_name_y"],
                            path=config["file"], out_path=config["out_1"])
 
 
