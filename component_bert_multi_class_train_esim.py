@@ -402,7 +402,7 @@ def main():
         else:
             sess.run(tf.global_variables_initializer())
 
-        print("********* bert_multi_class_train start *********")
+        print("********* bert_multi_class_train_esim start *********")
 
         # tf.summary.FileWriter("output/",sess.graph)
         def train_step(ids_1, mask_1, segment_1, ids_2, mask_2, segment_2, y, step):
@@ -519,5 +519,5 @@ def main():
 
 
 if __name__ == "__main__":
-    print("********* component_bert_multi_class_train_v2 start *********")
+    print("********* component_bert_multi_class_train_esim start *********")
     main()
